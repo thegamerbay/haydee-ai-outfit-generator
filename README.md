@@ -3,7 +3,7 @@
 [![Tests](https://github.com/thegamerbay/haydee-ai-outfit-generator/actions/workflows/tests.yml/badge.svg)](https://github.com/thegamerbay/haydee-ai-outfit-generator/actions/workflows/tests.yml)
 [![Lint](https://github.com/thegamerbay/haydee-ai-outfit-generator/actions/workflows/lint.yml/badge.svg)](https://github.com/thegamerbay/haydee-ai-outfit-generator/actions/workflows/lint.yml)
 [![Codecov](https://codecov.io/gh/thegamerbay/haydee-ai-outfit-generator/branch/main/graph/badge.svg)](https://codecov.io/gh/thegamerbay/haydee-ai-outfit-generator)
-[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
+[![Python Version](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 
@@ -11,7 +11,7 @@ Automated Python pipeline to generate custom outfit textures for the game Haydee
 
 ## Prerequisites
 
-1. **Python 3.10+**
+1. **Python 3.12+**
 2. **ImageMagick**: Required for the `Wand` library to process `.dds` files.
    * Download from [ImageMagick.org](https://imagemagick.org/script/download.php).
    * **Important during installation (Windows):** Ensure you check the box that says *"Install legacy utilities (e.g. convert)"* and add it to your System PATH.
