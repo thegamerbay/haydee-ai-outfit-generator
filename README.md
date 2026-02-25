@@ -50,6 +50,7 @@ Automated Python pipeline to generate custom outfit textures for the game [Hayde
 3. Copy `.env.example` to `.env` (or create one) and configure your variables:
 * `GEMINI_API_KEY`: Your Google Gemini API Key.
 * `HAYDEE_PATH`: Absolute path to your Haydee installation directory.
+* `IMAGE_RESOLUTION`: (Optional) Output resolution. Default is `4K`. Can be set to `2K` (2048x2048) if needed.
 
 ## 🐳 Setup (Docker)
 

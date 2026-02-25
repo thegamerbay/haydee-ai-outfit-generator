@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     gemini_api_key: str
     haydee_path: Path
+    image_resolution: str = "4K"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

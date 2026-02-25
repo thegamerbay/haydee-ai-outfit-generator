@@ -18,6 +18,8 @@ class GeminiModClient:
         """
         logger.info(f"Requesting Gemini to generate texture in style: '{style}'...")
 
+        res_text = "4096x4096 (4K)" if settings.image_resolution == "4K" else "2048x2048 (2K)"
+
         # Enhanced prompt tailored to the character's cybernetic/biomechanical nature
         prompt = f"""
         Attached is a UV map texture for the 3D character model 'Haydee'. 
@@ -30,7 +32,7 @@ class GeminiModClient:
         2. Transparency/Background: Keep the blank and transparent spaces exactly where they are in the original file. Do not fill empty UV space.
         3. Application: Apply the '{style}' aesthetic purely to the textured areas (armor panels, skin, details).
         4. Quality: Ensure high-fidelity texturing with sharp details, respecting the shadows and highlights of the original topology.
-        5. Resolution: Please generate the output image in exactly 2048x2048 (2K) resolution.
+        5. Resolution: Please generate the output image in exactly {res_text} resolution.
         
         Output ONLY the generated texture image.
         """
@@ -49,7 +51,7 @@ class GeminiModClient:
                 config=types.GenerateContentConfig(
                     response_modalities=['IMAGE'],
                     image_config=types.ImageConfig(
-                        image_size="2K"
+                        image_size=settings.image_resolution
                     )
                 )
             )
