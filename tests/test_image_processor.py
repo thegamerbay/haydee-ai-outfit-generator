@@ -19,8 +19,13 @@ def test_dds_to_png(mocker, tmp_path):
     assert mock_img_instance.format == 'png'
     mock_img_instance.save.assert_called_once_with(filename=str(png_path))
 
-def test_img_to_dds(mocker, tmp_path):
+@pytest.mark.parametrize("resolution, expected_size", [
+    ("4K", 4096),
+    ("2K", 2048)
+])
+def test_img_to_dds(mocker, tmp_path, resolution, expected_size):
     """Test that image conversion to dds executes required transformations."""
+    mocker.patch('core.image_processor.settings.image_resolution', resolution)
     mock_image_class = mocker.patch('core.image_processor.Image')
     mock_img_instance = mock_image_class.return_value.__enter__.return_value
     
@@ -33,7 +38,7 @@ def test_img_to_dds(mocker, tmp_path):
     mock_image_class.assert_called_once_with(filename=str(img_path))
     
     # Verify the required transformations
-    mock_img_instance.resize.assert_called_once_with(2048, 2048)
+    mock_img_instance.resize.assert_called_once_with(expected_size, expected_size)
     assert mock_img_instance.compression == 'dxt5'
     assert mock_img_instance.format == 'dds'
     mock_img_instance.save.assert_called_once_with(filename=str(dds_path))
