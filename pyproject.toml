@@ -4,10 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "haydee-outfit-generator"
-version = "1.0.0"
+version = "1.0.1"
 description = "Automated pipeline to generate custom outfit textures for Haydee using Gemini API."
 readme = "README.md"
 requires-python = ">=3.12"
+license = {file = "LICENSE"}
 dependencies = [
     "google-genai>=0.5.0",
     "pydantic-settings>=2.7.0",
@@ -19,9 +20,11 @@ authors = [
 urls = {Homepage = "https://github.com/thegamerbay/haydee-ai-outfit-generator"}
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 
 [project.scripts]
 haydee-gen = "haydee_outfit_gen.main:main"
+
+[tool.setuptools]
+packages = ["haydee_outfit_gen"]
