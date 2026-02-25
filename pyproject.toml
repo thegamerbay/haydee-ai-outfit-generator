@@ -13,6 +13,15 @@ dependencies = [
     "pydantic-settings>=2.7.0",
     "pillow>=11.0.0"
 ]
+authors = [
+    {name = "Artem Ryazanov", email = "artryazanov@gmail.com"},
+]
+urls = {Homepage = "https://github.com/thegamerbay/haydee-ai-outfit-generator"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
 
 [project.scripts]
 haydee-gen = "haydee_outfit_gen.main:main"
