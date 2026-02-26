@@ -40,7 +40,6 @@ Automated Python pipeline to generate custom outfit textures for the game [Hayde
 4. If prompted, read and accept the terms of service.
 5. Click on **"Create API key in new project"** (or use an existing project).
 6. Copy the generated key. You will need it for the `.env` file in the setup steps below.
-7. **Note:** Generating and using the Gemini API key is completely free within generous rate limits.
 
 ## 💻 Setup (Local)
 
