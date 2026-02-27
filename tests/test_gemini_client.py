@@ -7,7 +7,7 @@ def test_gemini_client_init(mock_config, mocker):
     """Test client initializes with the correct API key."""
     mock_genai = mocker.patch('haydee_outfit_gen.gemini_client.genai')
     
-    client = GeminiModClient()
+    client = GeminiModClient(api_key="fake_test_key_123")
     mock_genai.Client.assert_called_once_with(api_key="fake_test_key_123")
 
 def test_generate_texture_success_parts_image(mock_config, mocker, tmp_path):
@@ -40,7 +40,7 @@ def test_generate_texture_success_parts_image(mock_config, mocker, tmp_path):
     mock_client_instance.models.generate_content.return_value = mock_response
     
     # Initialize our client wrapper and call
-    client = GeminiModClient()
+    client = GeminiModClient(api_key="fake_test_key_123")
     
     from PIL import Image
     base_image = tmp_path / "base.png"
@@ -83,7 +83,7 @@ def test_generate_texture_success_inline_data(mock_config, mocker, tmp_path):
     
     mock_client_instance.models.generate_content.return_value = mock_response
     
-    client = GeminiModClient()
+    client = GeminiModClient(api_key="fake_test_key_123")
     
     from PIL import Image
     base_image = tmp_path / "base.png"
@@ -109,7 +109,7 @@ def test_generate_texture_no_image_returned(mock_config, mocker, tmp_path):
     
     mock_client_instance.models.generate_content.return_value = mock_response
     
-    client = GeminiModClient()
+    client = GeminiModClient(api_key="fake_test_key_123")
     
     from PIL import Image
     base_image = tmp_path / "base.png"
@@ -146,7 +146,7 @@ def test_generate_texture_invalid_resolution(mock_config, mocker, tmp_path):
     
     mock_client_instance.models.generate_content.return_value = mock_response
     
-    client = GeminiModClient()
+    client = GeminiModClient(api_key="fake_test_key_123")
     
     base_image = tmp_path / "base.png"
     Image.new('RGB', (1, 1)).save(base_image)

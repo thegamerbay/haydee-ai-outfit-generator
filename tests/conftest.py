@@ -31,11 +31,5 @@ def mock_config(mock_haydee_path):
     """Returns a Settings instance with the mocked Haydee path."""
     import haydee_outfit_gen.config
     
-    # Reload settings with the updated env var
-    _old_settings = haydee_outfit_gen.config.settings
-    haydee_outfit_gen.config.settings = haydee_outfit_gen.config.Settings()
-    
-    yield haydee_outfit_gen.config.settings
-    
-    # Restore old settings after test
-    haydee_outfit_gen.config.settings = _old_settings
+    settings = haydee_outfit_gen.config.Settings()
+    yield settings

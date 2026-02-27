@@ -6,13 +6,13 @@ import haydee_outfit_gen.main as main
 @patch("haydee_outfit_gen.main.argparse.ArgumentParser.parse_args")
 @patch("haydee_outfit_gen.main.ModBuilder")
 @patch("haydee_outfit_gen.main.ImageProcessor")
-@patch("haydee_outfit_gen.main.settings")
+@patch("haydee_outfit_gen.main.Settings")
 @patch("haydee_outfit_gen.main.GeminiModClient")
 @patch("haydee_outfit_gen.main.tempfile.TemporaryDirectory")
 def test_main_success_flow(
     mock_tmp_dir, 
     mock_gemini_client_class,
-    mock_settings_in_main,
+    mock_settings_class,
     mock_image_processor, 
     mock_mod_builder_class, 
     mock_parse_args, 
@@ -26,10 +26,12 @@ def test_main_success_flow(
     mock_args.author = None
     mock_parse_args.return_value = mock_args
     
-    # Setup mock path return based on settings property
     mock_path = MagicMock()
     mock_path.exists.return_value = True
-    mock_settings_in_main.base_texture_path = mock_path
+    
+    mock_settings_instance = MagicMock()
+    mock_settings_instance.base_texture_path = mock_path
+    mock_settings_class.return_value = mock_settings_instance
     
     # Setup ModBuilder mock
     mock_builder_instance = MagicMock()
@@ -59,22 +61,24 @@ def test_main_success_flow(
 @patch("haydee_outfit_gen.main.sys.argv", ["haydee-gen", "--name", "OldStyle", "--style", "cool"])
 @patch("haydee_outfit_gen.main.ModBuilder")
 @patch("haydee_outfit_gen.main.ImageProcessor")
-@patch("haydee_outfit_gen.main.settings")
+@patch("haydee_outfit_gen.main.Settings")
 @patch("haydee_outfit_gen.main.GeminiModClient")
 @patch("haydee_outfit_gen.main.tempfile.TemporaryDirectory")
 def test_main_backward_compatibility(
     mock_tmp_dir, 
     mock_gemini_client_class,
-    mock_settings_in_main,
+    mock_settings_class,
     mock_image_processor, 
     mock_mod_builder_class, 
     mock_config
 ):
     """Test that running without a subcommand defaults to 'generate'."""
-    # Setup mock path return based on settings property
     mock_path = MagicMock()
     mock_path.exists.return_value = True
-    mock_settings_in_main.base_texture_path = mock_path
+    
+    mock_settings_instance = MagicMock()
+    mock_settings_instance.base_texture_path = mock_path
+    mock_settings_class.return_value = mock_settings_instance
     
     # Setup ModBuilder mock
     mock_builder_instance = MagicMock()
@@ -99,10 +103,11 @@ def test_main_backward_compatibility(
     mock_gemini_instance.generate_texture.assert_called_once()
     mock_image_processor.img_to_dds.assert_called_once()
 
+@patch("haydee_outfit_gen.main.Settings")
 @patch("haydee_outfit_gen.main.sys.argv", ["haydee-gen", "generate"])
 @patch("haydee_outfit_gen.main.argparse.ArgumentParser.parse_args")
-@patch("haydee_outfit_gen.main.settings")
-def test_main_base_texture_not_found(mock_settings_in_main, mock_parse_args, mock_config, caplog):
+@patch("haydee_outfit_gen.main.ModBuilder")
+def test_main_base_texture_not_found(mock_mod_builder_class, mock_parse_args, mock_settings_class, mock_config, caplog):
     """Test that main exits and logs an error when the base texture is missing."""
     import logging
     
@@ -113,10 +118,12 @@ def test_main_base_texture_not_found(mock_settings_in_main, mock_parse_args, moc
     mock_args.author = None
     mock_parse_args.return_value = mock_args
 
-    # Override the settings mock in main to return a fake path that does not exist
     mock_path = MagicMock()
     mock_path.exists.return_value = False
-    mock_settings_in_main.base_texture_path = mock_path
+
+    mock_settings_instance = MagicMock()
+    mock_settings_instance.base_texture_path = mock_path
+    mock_settings_class.return_value = mock_settings_instance
 
     # main script uses exit(1) on failure
     with pytest.raises(SystemExit) as excinfo:
@@ -150,15 +157,19 @@ def test_main_general_exception(mock_mod_builder_class, mock_parse_args, mock_co
     assert "An error occurred" in caplog.text
     assert "A wild unexpected error appeared!" in caplog.text
 
+@patch("haydee_outfit_gen.main.Settings")
 @patch("haydee_outfit_gen.main.sys.argv", ["haydee-gen", "group"])
 @patch("haydee_outfit_gen.main.argparse.ArgumentParser.parse_args")
 @patch("haydee_outfit_gen.main.MultiModBuilder")
 def test_main_group_success_flow(
     mock_multimod_builder_class, 
     mock_parse_args,
+    mock_settings_class,
     mock_config
 ):
     """Test the successful end-to-end run of the group CLI command."""
+    mock_settings_instance = MagicMock()
+    mock_settings_class.return_value = mock_settings_instance
     mock_args = MagicMock()
     mock_args.command = "group"
     mock_args.name = "Rainbow"
@@ -177,6 +188,7 @@ def test_main_group_success_flow(
     mock_multimod_builder_class.assert_called_once_with(
         multimod_name="Rainbow",
         source_mods=["red", "blue"],
+        outfits_dir=mock_settings_instance.outfits_dir,
         slot_category="color",
         author="Artem"
     )

@@ -1,7 +1,6 @@
 import logging
 from pathlib import Path
 from PIL import Image
-from .config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -17,11 +16,11 @@ class ImageProcessor:
         logger.info(f"Successfully saved to {png_path}")
 
     @staticmethod
-    def img_to_dds(img_path: Path, dds_path: Path) -> None:
+    def img_to_dds(img_path: Path, dds_path: Path, resolution: str = "4K") -> None:
         """Converts a generated image (PNG/JPG) back to DDS format."""
         logger.info(f"Converting {img_path.name} to DDS...")
         with Image.open(img_path) as img:
-            target_size = 4096 if settings.image_resolution == "4K" else 2048
+            target_size = 4096 if resolution == "4K" else 2048
             
             # Resize with a high-quality anti-aliasing filter
             img_resized = img.resize((target_size, target_size), Image.Resampling.LANCZOS)

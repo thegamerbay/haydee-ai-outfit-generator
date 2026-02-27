@@ -16,5 +16,3 @@ class Settings(BaseSettings):
     @property
     def base_texture_path(self) -> Path:
         return self.outfits_dir / "Haydee" / "Suit_D.dds"
-
-settings = Settings()

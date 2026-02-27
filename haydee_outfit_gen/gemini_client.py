@@ -2,15 +2,16 @@ import logging
 from pathlib import Path
 from google import genai
 from google.genai import types
-from .config import settings
 
 logger = logging.getLogger(__name__)
 
 class GeminiModClient:
     """Handles communication with the Gemini API for texture generation."""
 
-    def __init__(self):
-        self.client = genai.Client(api_key=settings.gemini_api_key)
+    def __init__(self, api_key: str, image_resolution: str = "4K"):
+        self.api_key = api_key
+        self.image_resolution = image_resolution
+        self.client = genai.Client(api_key=self.api_key)
 
     def generate_texture(self, base_image_path: Path, style: str, output_path: Path) -> None:
         """
@@ -18,7 +19,7 @@ class GeminiModClient:
         """
         logger.info(f"Requesting Gemini to generate texture in style: '{style}'...")
 
-        res_text = "4096x4096 (4K)" if settings.image_resolution == "4K" else "2048x2048 (2K)"
+        res_text = "4096x4096 (4K)" if self.image_resolution == "4K" else "2048x2048 (2K)"
 
         # Enhanced prompt tailored to the character's cybernetic/biomechanical nature
         prompt = f"""
@@ -53,7 +54,7 @@ class GeminiModClient:
                     response_modalities=['IMAGE'],
                     image_config=types.ImageConfig(
                         aspect_ratio="1:1",
-                        image_size=settings.image_resolution
+                        image_size=self.image_resolution
                     )
                 )
             )
@@ -97,9 +98,9 @@ class GeminiModClient:
                     width, height = gen_img.size
                     logger.info(f"Generated image resolution from Gemini API: {width}x{height}")
                     
-                    expected_res = 4096 if settings.image_resolution == "4K" else 2048
+                    expected_res = 4096 if self.image_resolution == "4K" else 2048
                     if width != expected_res or height != expected_res:
-                        raise ValueError(f"Generated image resolution ({width}x{height}) does not match expected {settings.image_resolution} ({expected_res}x{expected_res}).")
+                        raise ValueError(f"Generated image resolution ({width}x{height}) does not match expected {self.image_resolution} ({expected_res}x{expected_res}).")
             except ValueError:
                 raise
             except Exception as e:

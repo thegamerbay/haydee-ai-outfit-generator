@@ -25,7 +25,6 @@ def test_settings_missing_api_key(monkeypatch):
     
     # Force pure environment variables for this test
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
-    monkeypatch.setattr(haydee_outfit_gen.config, "settings", None)
     
     with pytest.raises(ValidationError) as excinfo:
         haydee_outfit_gen.config.Settings(_env_file=None)
@@ -39,7 +38,6 @@ def test_settings_missing_haydee_path(monkeypatch):
     
     monkeypatch.delenv("HAYDEE_PATH", raising=False)
     monkeypatch.setenv("GEMINI_API_KEY", "fake_test_key")
-    monkeypatch.setattr(haydee_outfit_gen.config, "settings", None)
     
     with pytest.raises(ValidationError) as excinfo:
         haydee_outfit_gen.config.Settings(_env_file=None)

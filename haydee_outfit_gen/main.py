@@ -4,7 +4,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from haydee_outfit_gen.config import settings
+from haydee_outfit_gen.config import Settings
 from haydee_outfit_gen.image_processor import ImageProcessor
 from haydee_outfit_gen.gemini_client import GeminiModClient
 from haydee_outfit_gen.mod_builder import ModBuilder, MultiModBuilder
@@ -49,14 +49,17 @@ def main():
 
     args = parser.parse_args(argv)
 
+    # Initialize settings only for the CLI execution
+    config = Settings()
+
     try:
         if args.command == "generate":
             # 1. Setup Mod Directory and Builder
-            builder = ModBuilder(args.name, author=args.author)
+            builder = ModBuilder(args.name, outfits_dir=config.outfits_dir, author=args.author)
             builder.prepare_directory()
 
             # 2. Process Original Texture
-            base_dds = settings.base_texture_path
+            base_dds = config.base_texture_path
             if not base_dds.exists():
                 raise FileNotFoundError(f"Base texture not found at {base_dds}")
 
@@ -69,7 +72,7 @@ def main():
                 ImageProcessor.dds_to_png(base_dds, base_png)
 
                 # 3. Generate New Texture via Gemini
-                client = GeminiModClient()
+                client = GeminiModClient(api_key=config.gemini_api_key, image_resolution=config.image_resolution)
                 client.generate_texture(
                     base_image_path=base_png,
                     style=args.style,
@@ -78,7 +81,7 @@ def main():
 
                 # 4. Convert Result back to DDS in the new mod folder
                 final_dds_path = builder.mod_dir / "Suit_D.dds"
-                ImageProcessor.img_to_dds(generated_jpg, final_dds_path)
+                ImageProcessor.img_to_dds(generated_jpg, final_dds_path, resolution=config.image_resolution)
 
             # 5. Generate Configuration Files
             builder.generate_mtl_file()
@@ -90,6 +93,7 @@ def main():
             builder = MultiModBuilder(
                 multimod_name=args.name,
                 source_mods=args.mods,
+                outfits_dir=config.outfits_dir,
                 slot_category=args.slot_category,
                 author=args.author
             )

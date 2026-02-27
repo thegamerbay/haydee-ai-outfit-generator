@@ -25,7 +25,6 @@ def test_dds_to_png(mocker, tmp_path):
 ])
 def test_img_to_dds(mocker, tmp_path, resolution, expected_size):
     """Test that image conversion to dds executes required transformations."""
-    mocker.patch('haydee_outfit_gen.image_processor.settings.image_resolution', resolution)
     mock_image_open = mocker.patch('haydee_outfit_gen.image_processor.Image.open')
     mock_img_context = mock_image_open.return_value.__enter__.return_value
     mock_resized = mocker.MagicMock()
@@ -34,7 +33,7 @@ def test_img_to_dds(mocker, tmp_path, resolution, expected_size):
     img_path = tmp_path / "input.jpg"
     dds_path = tmp_path / "output.dds"
     
-    ImageProcessor.img_to_dds(img_path, dds_path)
+    ImageProcessor.img_to_dds(img_path, dds_path, resolution=resolution)
     
     # Verify the Image class was initialized correctly
     mock_image_open.assert_called_once_with(img_path)

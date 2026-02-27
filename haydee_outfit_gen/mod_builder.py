@@ -2,20 +2,20 @@ import os
 import shutil
 import logging
 from pathlib import Path
-from .config import settings
 
 logger = logging.getLogger(__name__)
 
 class ModBuilder:
     """Handles the creation of directories and mod configuration files."""
 
-    def __init__(self, mod_name: str, author: str = None):
+    def __init__(self, mod_name: str, outfits_dir: Path, author: str = None):
         if mod_name.strip().lower() == "haydee":
             raise ValueError("Mod name cannot be 'Haydee'. This protects the system outfit.")
         
         self.mod_name = mod_name.strip()
         self.author = author
-        self.mod_dir = settings.outfits_dir / self.mod_name
+        self.outfits_dir = outfits_dir
+        self.mod_dir = self.outfits_dir / self.mod_name
 
     def prepare_directory(self) -> None:
         """Creates the mod directory, overwriting if it already exists."""
@@ -151,7 +151,7 @@ outfit
 	}}
 }}
 """
-        outfit_path = settings.outfits_dir / f"{self.mod_name}.outfit"
+        outfit_path = self.outfits_dir / f"{self.mod_name}.outfit"
         outfit_path.write_text(outfit_content, encoding="utf-8")
         logger.info(f"Generated {outfit_path.name}")
 
@@ -159,7 +159,7 @@ outfit
 class MultiModBuilder:
     """Handles grouping of multiple generated mods into a single multi-variant outfit."""
 
-    def __init__(self, multimod_name: str, source_mods: list[str], slot_category: str = "variant", author: str = None):
+    def __init__(self, multimod_name: str, source_mods: list[str], outfits_dir: Path, slot_category: str = "variant", author: str = None):
         if multimod_name.strip().lower() == "haydee":
             raise ValueError("Multi-mod name cannot be 'Haydee'. This protects the system outfit.")
         
@@ -167,7 +167,8 @@ class MultiModBuilder:
         self.source_mods = [m.strip() for m in source_mods]
         self.slot_category = slot_category
         self.author = author
-        self.mod_dir = settings.outfits_dir / self.multimod_name
+        self.outfits_dir = outfits_dir
+        self.mod_dir = self.outfits_dir / self.multimod_name
 
     def validate_sources(self) -> None:
         """Checks that all source mods exist and are not system protected."""
@@ -175,9 +176,9 @@ class MultiModBuilder:
             if mod.lower() == "haydee":
                 raise ValueError(f"Cannot group the system 'Haydee' mod. Please remove it from the list.")
             
-            mod_path = settings.outfits_dir / mod
+            mod_path = self.outfits_dir / mod
             if not mod_path.exists():
-                raise FileNotFoundError(f"Source mod '{mod}' not found in {settings.outfits_dir}.")
+                raise FileNotFoundError(f"Source mod '{mod}' not found in {self.outfits_dir}.")
             
             dds_path = mod_path / "Suit_D.dds"
             if not dds_path.exists():
@@ -196,7 +197,7 @@ class MultiModBuilder:
         """Copies textures from source mods and generates an MTL for each variant."""
         for mod in self.source_mods:
             # Copy texture and rename it to {mod}_d.dds to prevent collisions
-            src_dds = settings.outfits_dir / mod / "Suit_D.dds"
+            src_dds = self.outfits_dir / mod / "Suit_D.dds"
             dst_dds = self.mod_dir / f"{mod}_d.dds"
             shutil.copy2(src_dds, dst_dds)
             
@@ -221,7 +222,7 @@ material
 
     def generate_outfit_file(self) -> None:
         """Generates the main .outfit file grouping all variants."""
-        outfit_path = settings.outfits_dir / f"{self.multimod_name}.outfit"
+        outfit_path = self.outfits_dir / f"{self.multimod_name}.outfit"
         
         author_slot = f'\n\t\tslot\t\t"mod by" "{self.author}";' if self.author else ""
         
@@ -338,11 +339,11 @@ material
     def cleanup_sources(self) -> None:
         """Deletes original mod folders and files if requested."""
         for mod in self.source_mods:
-            mod_path = settings.outfits_dir / mod
+            mod_path = self.outfits_dir / mod
             if mod_path.exists():
                 shutil.rmtree(mod_path)
             
-            outfit_file = settings.outfits_dir / f"{mod}.outfit"
+            outfit_file = self.outfits_dir / f"{mod}.outfit"
             if outfit_file.exists():
                 outfit_file.unlink()
                 
