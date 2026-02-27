@@ -20,13 +20,13 @@ def main():
     parser = argparse.ArgumentParser(description="Haydee Outfit Mod Generator via Gemini API")
     subparsers = parser.add_subparsers(dest="command")
 
-    # --- Command: Generate (Одиночный мод) ---
+    # --- Command: Generate (Single mod) ---
     gen_parser = subparsers.add_parser("generate", help="Generate a new single outfit mod")
     gen_parser.add_argument("--name", type=str, required=True, help="Name of the mod (e.g., Synthwave)")
     gen_parser.add_argument("--style", type=str, required=True, help="Visual style description")
     gen_parser.add_argument("--author", type=str, help="Add author name info slot (e.g., 'kejdi')")
 
-    # --- Command: Group (Мультимод) ---
+    # --- Command: Group (Multi-mod) ---
     group_parser = subparsers.add_parser("group", help="Group multiple existing mods into a single multi-mod")
     group_parser.add_argument("--name", type=str, required=True, help="Name of the new multi-mod (e.g., Rainbow)")
     group_parser.add_argument("--mods", nargs='+', required=True, help="List of source mod names to group (e.g., red green blue)")
@@ -34,16 +34,16 @@ def main():
     group_parser.add_argument("--author", type=str, help="Add author name info slot (e.g., 'kejdi')")
     group_parser.add_argument("--delete-sources", action="store_true", help="Delete source mods after successful grouping")
 
-    # --- Логика обратной совместимости (Default Subcommand) ---
+    # --- Backward compatibility logic (Default Subcommand) ---
     argv = sys.argv[1:]
     
-    # Если аргументов нет вообще, просто показываем справку
+    # If there are no arguments at all, just show help
     if not argv:
         parser.print_help()
         sys.exit(1)
         
-    # Если первый аргумент не является известной командой или флагом справки, 
-    # предполагаем, что пользователь использует старый синтаксис (generate)
+    # If the first argument is not a known command or help flag, 
+    # assume the user is using the old syntax (generate)
     if argv[0] not in ['generate', 'group', '-h', '--help']:
         argv.insert(0, 'generate')
 

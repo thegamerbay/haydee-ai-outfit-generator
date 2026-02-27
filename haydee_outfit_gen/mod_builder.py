@@ -231,7 +231,7 @@ material
             "outfit\n{",
             f'\tname\t\t\t"{self.multimod_name}";',
             "\tdefault\t\t\tfalse;\n",
-            # Добавляем общий меш Vest со слотом автора, как в твоем примере
+            # Add a common Vest mesh with the author slot, like in your example
             f"""\tmesh
 \t{{
 \t\tmesh\t\t"Outfits\\Haydee\\Vest.mesh";
@@ -245,7 +245,7 @@ material
 \t}}\n"""
         ]
 
-        # Добавляем блоки Helmet, Hands и Suit для каждого мода-варианта
+        # Add Helmet, Hands, and Suit blocks for each mod variant
         for mod in self.source_mods:
             variant_block = f"""\tmesh
 \t{{
@@ -290,7 +290,7 @@ material
 \t}}\n"""
             lines.append(variant_block)
 
-        # Добавляем оставшиеся общие элементы игры
+        # Add remaining common game elements
         common_elements = """\tmesh
 \t{
 \t\tmesh\t\t"Outfits\\Haydee\\Clock.mesh";
