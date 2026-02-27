@@ -52,6 +52,7 @@ class GeminiModClient:
                 config=types.GenerateContentConfig(
                     response_modalities=['IMAGE'],
                     image_config=types.ImageConfig(
+                        aspect_ratio="1:1",
                         image_size=settings.image_resolution
                     )
                 )
