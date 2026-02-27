@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 license = {file = "LICENSE"}
 dependencies = [
-    "google-genai>=0.5.0",
+    "google-genai>=1.65.0",
     "pydantic-settings>=2.7.0",
     "pillow>=11.0.0"
 ]
