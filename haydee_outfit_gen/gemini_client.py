@@ -31,11 +31,12 @@ class GeminiModClient:
         CRITICAL INSTRUCTIONS:
         1. Anatomy Warning (Legs): The two large vertical sections filling the bottom half of the image are the character's LEGS and THIGHS, absolutely NOT a torso. DO NOT generate abdominal muscles, chests, or torso armor on these lower sections. Treat them strictly as leg/thigh surfaces.
         2. Anatomy Warning (Head/Face): The character is a FACELESS robot. The round area on the mid-right is the helmet/head. ABSOLUTELY DO NOT generate human faces, eyes, noses, mouths, teeth, or hair. This area MUST remain a blank synthetic panel.
-        3. Exact Mapping: Maintain the exact UV layout, seams, alignment, and proportions of the original image so it maps perfectly back onto the 3D model.
-        4. Transparency/Background: Keep the blank and transparent spaces exactly where they are in the original file. Do not fill empty UV space.
-        5. Application: Apply the '{style}' aesthetic purely to the textured areas (armor panels, skin, details).
-        6. Quality: Ensure high-fidelity texturing with sharp details, respecting the shadows and highlights of the original topology.
-        7. Resolution: Please generate the output image in exactly {res_text} resolution.
+        3. Anatomy Warning (Torso Continuity): The two shapes in the top-left area are the front torso (left) and back torso (right). It is CRITICAL that the materials on the outer edges of these two shapes match perfectly so they stitch together without seams in 3D. If the bottom sides of the front torso are bare skin, the bottom sides of the back torso MUST also be bare skin. If one side has armor or fabric wrapping around, the other must seamlessly continue that same armor/fabric. Do NOT mix materials on the side seams.
+        4. Exact Mapping: Maintain the exact UV layout, seams, alignment, and proportions of the original image so it maps perfectly back onto the 3D model.
+        5. Transparency/Background: Keep the blank and transparent spaces exactly where they are in the original file. Do not fill empty UV space.
+        6. Application: Apply the '{style}' aesthetic purely to the textured areas (armor panels, skin, details).
+        7. Quality: Ensure high-fidelity texturing with sharp details, respecting the shadows and highlights of the original topology.
+        8. Resolution: Please generate the output image in exactly {res_text} resolution.
         
         Output ONLY the generated texture image.
         """
