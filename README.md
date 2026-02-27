@@ -73,21 +73,31 @@ If you prefer to run the project without installing Python locally, you can use 
 
 ### Running Locally
 
-Run the script by providing the mod name and the desired style description:
+**1. Generating a Single Outfit**
+Run the `generate` command by providing the mod name, the desired style description, and optionally an author:
 
 ```bash
-haydee-gen --name "NeonSurge" --style "cyberpunk neon lights with dark carbon fiber armor"
+haydee-gen generate --name "NeonSurge" --style "cyberpunk neon lights with dark carbon fiber armor" --author "TheGamerBay"
 ```
+*(Tip: You can omit the `generate` keyword for a shorter command: `haydee-gen --name ...`)*
+
+The script will automatically read the base texture, contact the Gemini API, convert the formats, and generate the mod inside your `Haydee/Outfits` folder.
+
+**2. Grouping Outfits into a Multi-Mod**
+If you have generated multiple outfits and want to group them into a single mod with switchable variations (e.g., in a single "Rainbow" outfit with different colored slots):
+
+```bash
+haydee-gen group --name "Rainbow" --mods red green blue --slot-category "color" --author "TheGamerBay" --delete-sources
+```
+* `--delete-sources` is an optional flag that will remove the original single-mod folders and configs after successfully grouping them.
 
 ### Running with Docker
 
-You can use Docker Compose to automatically mount your Haydee directory and run the command:
+You can use Docker Compose to automatically mount your Haydee directory and run the commands:
 
 ```bash
-docker-compose run --rm generator --name "NeonSurge" --style "cyberpunk neon lights with dark carbon fiber armor"
+docker-compose run --rm generator generate --name "NeonSurge" --style "cyberpunk neon lights with dark carbon fiber armor"
 ```
-
-The script will automatically read the base texture, contact the Gemini API, convert the formats, and generate the mod inside your `Haydee/Outfits` folder.
 
 ## 📤 Publishing to Steam Workshop
 
