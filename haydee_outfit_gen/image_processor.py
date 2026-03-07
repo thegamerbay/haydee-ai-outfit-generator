@@ -83,3 +83,31 @@ class ImageProcessor:
         neutral_img.save(dds_path, format="DDS", pixel_format="DXT5")
         
         logger.info(f"Successfully created neutral normal map: {dds_path}")
+
+    @staticmethod
+    def create_custom_normal_map(normal_path: Path, dds_path: Path, resolution: str = "4K") -> None:
+        """Converts a standard RGB normal map from AI into Haydee's DXT5nm format."""
+        logger.info("Packing AI normal map into DXT5nm format...")
+        
+        with Image.open(normal_path) as img:
+            # Ensure we are working in RGB mode
+            img = img.convert("RGB")
+            
+            # Split standard blue normal map into channels: R (X-axis), G (Y-axis), B (Z-axis)
+            r, g, b = img.split()
+            
+            # Create a neutral channel "dummy" filled with 128 (gray)
+            neutral = Image.new("L", img.size, 128)
+            
+            # Pack into DXT5nm format for Haydee:
+            # R = 128 (muted)
+            # G = G (keep Y-axis)
+            # B = 128 (muted)
+            # Alpha = R (move X-axis into the alpha channel)
+            suit_n = Image.merge("RGBA", (neutral, g, neutral, r))
+            
+            target_size = 4096 if resolution == "4K" else 2048
+            suit_n_resized = suit_n.resize((target_size, target_size), Image.Resampling.LANCZOS)
+            suit_n_resized.save(dds_path, format="DDS", pixel_format="DXT5")
+            
+        logger.info(f"Successfully created custom normal map: {dds_path}")

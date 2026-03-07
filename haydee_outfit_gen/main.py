@@ -68,6 +68,7 @@ def main():
                 base_png = temp_path / "base_Suit_D.png"
                 generated_d_png = temp_path / "generated_Suit_D.png"
                 generated_mask = temp_path / "material_mask.png"
+                generated_n_png = temp_path / "generated_normal.png"
 
                 # 1. Convert base DDS to PNG
                 ImageProcessor.dds_to_png(base_dds, base_png)
@@ -98,9 +99,13 @@ def main():
                 final_s_dds = builder.mod_dir / "Suit_S.dds"
                 ImageProcessor.create_specular_map(generated_mask, final_s_dds, resolution=config.image_resolution)
 
-                # 6. Generate Neutral Normal Map as DDS
+                # 6. Generate Custom Normal Map
+                client.generate_normal_map(
+                    diffuse_image_path=generated_d_png,
+                    output_path=generated_n_png
+                )
                 final_n_dds = builder.mod_dir / "Suit_N.dds"
-                ImageProcessor.create_neutral_normal_map(final_n_dds, resolution=config.image_resolution)
+                ImageProcessor.create_custom_normal_map(generated_n_png, final_n_dds, resolution=config.image_resolution)
 
             # 7. Generate Configuration Files
             builder.generate_mtl_file()

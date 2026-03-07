@@ -100,3 +100,41 @@ def test_create_neutral_normal_map(mocker, tmp_path):
     # Change expected values to RGBA and semi-transparent gray
     mock_image_new.assert_called_once_with("RGBA", (4096, 4096), (128, 128, 128, 128))
     mock_neutral_img.save.assert_called_once_with(dds_path, format="DDS", pixel_format="DXT5")
+
+def test_create_custom_normal_map(mocker, tmp_path):
+    """Test that custom AI normal map is correctly packed into DXT5nm."""
+    mock_image_open = mocker.patch('haydee_outfit_gen.image_processor.Image.open')
+    mock_img_context = mock_image_open.return_value.__enter__.return_value
+    
+    mock_rgb = mocker.MagicMock()
+    mock_img_context.convert.return_value = mock_rgb
+    
+    mock_r = mocker.MagicMock()
+    mock_g = mocker.MagicMock()
+    mock_b = mocker.MagicMock()
+    mock_rgb.split.return_value = (mock_r, mock_g, mock_b)
+    mock_rgb.size = (4096, 4096)
+    
+    mock_image_new = mocker.patch('haydee_outfit_gen.image_processor.Image.new')
+    mock_neutral = mocker.MagicMock()
+    mock_image_new.return_value = mock_neutral
+    
+    mock_image_merge = mocker.patch('haydee_outfit_gen.image_processor.Image.merge')
+    mock_merged = mocker.MagicMock()
+    mock_image_merge.return_value = mock_merged
+    
+    mock_resized = mocker.MagicMock()
+    mock_merged.resize.return_value = mock_resized
+    
+    normal_path = tmp_path / "normal.png"
+    dds_path = tmp_path / "Suit_N.dds"
+    
+    ImageProcessor.create_custom_normal_map(normal_path, dds_path, resolution="4K")
+    
+    mock_image_open.assert_called_once_with(normal_path)
+    mock_img_context.convert.assert_called_once_with("RGB")
+    mock_rgb.split.assert_called_once()
+    mock_image_new.assert_called_once_with("L", (4096, 4096), 128)
+    mock_image_merge.assert_called_once_with("RGBA", (mock_neutral, mock_g, mock_neutral, mock_r))
+    mock_merged.resize.assert_called_once_with((4096, 4096), Image.Resampling.LANCZOS)
+    mock_resized.save.assert_called_once_with(dds_path, format="DDS", pixel_format="DXT5")

@@ -181,3 +181,64 @@ class GeminiModClient:
         except Exception as e:
             logger.error(f"Failed to generate material mask: {e}")
             raise
+
+    def generate_normal_map(self, diffuse_image_path: Path, output_path: Path) -> None:
+        """
+        Generates a Tangent Space Normal Map based on the generated diffuse texture.
+        """
+        logger.info("Requesting Gemini to generate a normal map...")
+
+        prompt = """
+        This is a diffuse UV texture for a 3D character. I need you to create a high-quality Tangent Space Normal Map based exactly on this image.
+        Follow these strict rules:
+        - The base flat surface MUST be standard normal map blue: RGB(128, 128, 255).
+        - Add 3D relief, bumps, fabric folds, armor panel gaps, and seams matching the details in the diffuse texture.
+        - Maintain the exact same UV layout, borders, and transparent background as the provided image.
+        Output ONLY the normal map image.
+        """
+        
+        try:
+            from PIL import Image
+            contents = [prompt, Image.open(diffuse_image_path)]
+            
+            result = self.client.models.generate_content(
+                model=self.model_name,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    response_modalities=['IMAGE'],
+                    image_config=types.ImageConfig(
+                        aspect_ratio="1:1",
+                        image_size=self.image_resolution
+                    )
+                )
+            )
+            
+            saved = False
+            if hasattr(result, 'candidates') and result.candidates:
+                for candidate in result.candidates:
+                    if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
+                        for part in candidate.content.parts:
+                            if hasattr(part, 'image') and part.image:
+                                with open(output_path, "wb") as f:
+                                    f.write(part.image.image_bytes)
+                                return
+                            elif hasattr(part, 'inline_data') and part.inline_data:
+                                with open(output_path, "wb") as f:
+                                    f.write(part.inline_data.data)
+                                return
+            
+            if not saved and hasattr(result, 'parts') and result.parts:
+                for part in result.parts:
+                    if hasattr(part, 'image') and part.image:
+                         with open(output_path, "wb") as f:
+                            f.write(part.image.image_bytes)
+                         return
+                    elif hasattr(part, 'inline_data') and part.inline_data:
+                         with open(output_path, "wb") as f:
+                            f.write(part.inline_data.data)
+                         return
+                        
+            raise RuntimeError("No normal map image was returned from Gemini API.")
+        except Exception as e:
+            logger.error(f"Failed to generate normal map: {e}")
+            raise

@@ -57,7 +57,8 @@ def test_main_success_flow(
     mock_gemini_instance.generate_material_mask.assert_called_once()
     mock_image_processor.img_to_dds.assert_called_once()
     mock_image_processor.create_specular_map.assert_called_once()
-    mock_image_processor.create_neutral_normal_map.assert_called_once()
+    mock_gemini_instance.generate_normal_map.assert_called_once()
+    mock_image_processor.create_custom_normal_map.assert_called_once()
     mock_builder_instance.generate_mtl_file.assert_called_once()
     mock_builder_instance.generate_outfit_file.assert_called_once()
     
@@ -107,7 +108,8 @@ def test_main_backward_compatibility(
     mock_gemini_instance.generate_material_mask.assert_called_once()
     mock_image_processor.img_to_dds.assert_called_once()
     mock_image_processor.create_specular_map.assert_called_once()
-    mock_image_processor.create_neutral_normal_map.assert_called_once()
+    mock_gemini_instance.generate_normal_map.assert_called_once()
+    mock_image_processor.create_custom_normal_map.assert_called_once()
 
 @patch("haydee_outfit_gen.main.Settings")
 @patch("haydee_outfit_gen.main.sys.argv", ["haydee-gen", "generate"])
