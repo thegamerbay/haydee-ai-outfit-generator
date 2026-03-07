@@ -127,6 +127,7 @@ def test_multimod_migrate_assets_and_generate_mtls(mock_config, mocker):
     mod_dir = mock_config.outfits_dir / "red"
     mod_dir.mkdir(parents=True)
     (mod_dir / "Suit_D.dds").write_text("dds binary data")
+    (mod_dir / "Suit_S.dds").write_text("specular binary data")
     
     builder = MultiModBuilder("Rainbow", ["red"], outfits_dir=mock_config.outfits_dir)
     builder.prepare_directory()
@@ -136,10 +137,16 @@ def test_multimod_migrate_assets_and_generate_mtls(mock_config, mocker):
     assert migrated_dds.exists()
     assert migrated_dds.read_text() == "dds binary data"
     
+    migrated_s_dds = builder.mod_dir / "red_s.dds"
+    assert migrated_s_dds.exists()
+    assert migrated_s_dds.read_text() == "specular binary data"
+    
     mtl_file = builder.mod_dir / "red.mtl"
     assert mtl_file.exists()
     mtl_content = mtl_file.read_text(encoding="utf-8")
     assert 'diffuseMap "Outfits\\Rainbow\\red_d.dds"' in mtl_content
+    assert 'specularMap "Outfits\\Rainbow\\red_s.dds"' in mtl_content
+    assert 'normalMap "Outfits\\Rainbow\\Suit_N.dds"' in mtl_content
 
 def test_multimod_generate_outfit_file(mock_config, mocker):
     builder = MultiModBuilder("Rainbow", ["red", "blue"], outfits_dir=mock_config.outfits_dir, slot_category="color", author="Artem")
