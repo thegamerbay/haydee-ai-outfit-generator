@@ -66,24 +66,39 @@ def main():
             with tempfile.TemporaryDirectory() as temp_dir:
                 temp_path = Path(temp_dir)
                 base_png = temp_path / "base_Suit_D.png"
-                generated_jpg = temp_path / "generated_Suit_D.jpg"
+                generated_d_png = temp_path / "generated_Suit_D.png"
+                generated_mask = temp_path / "material_mask.png"
 
-                # Convert base DDS to PNG for Gemini
+                # 1. Convert base DDS to PNG
                 ImageProcessor.dds_to_png(base_dds, base_png)
 
-                # 3. Generate New Texture via Gemini
+                # 2. Generate Suit_D New Texture
                 client = GeminiModClient(api_key=config.gemini_api_key, image_resolution=config.image_resolution)
                 client.generate_texture(
                     base_image_path=base_png,
                     style=args.style,
-                    output_path=generated_jpg
+                    output_path=generated_d_png
                 )
 
-                # 4. Convert Result back to DDS in the new mod folder
-                final_dds_path = builder.mod_dir / "Suit_D.dds"
-                ImageProcessor.img_to_dds(generated_jpg, final_dds_path, resolution=config.image_resolution)
+                # 3. Generate Material Mask from the new Suit_D
+                client.generate_material_mask(
+                    diffuse_image_path=generated_d_png,
+                    output_path=generated_mask
+                )
 
-            # 5. Generate Configuration Files
+                # 4. Save Diffuse as DDS
+                final_d_dds = builder.mod_dir / "Suit_D.dds"
+                ImageProcessor.img_to_dds(generated_d_png, final_d_dds, resolution=config.image_resolution)
+
+                # 5. Pack and Save Specular as DDS
+                final_s_dds = builder.mod_dir / "Suit_S.dds"
+                ImageProcessor.create_specular_map(generated_mask, final_s_dds, resolution=config.image_resolution)
+
+                # 6. Generate Neutral Normal Map as DDS
+                final_n_dds = builder.mod_dir / "Suit_N.dds"
+                ImageProcessor.create_neutral_normal_map(final_n_dds, resolution=config.image_resolution)
+
+            # 7. Generate Configuration Files
             builder.generate_mtl_file()
             builder.generate_outfit_file()
 
@@ -100,6 +115,12 @@ def main():
             builder.validate_sources()
             builder.prepare_directory()
             builder.migrate_assets_and_generate_mtls()
+            
+            # Since all variants use flat normals and speculars, we can just grab them from one of the source mods,
+            # or regenerate a shared flat normal map for the grouped mod.
+            final_n_dds = builder.mod_dir / "Suit_N.dds"
+            ImageProcessor.create_neutral_normal_map(final_n_dds, resolution=config.image_resolution)
+            
             builder.generate_outfit_file()
             
             if args.delete_sources:

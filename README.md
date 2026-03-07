@@ -81,7 +81,7 @@ haydee-gen generate --name "NeonSurge" --style "cyberpunk neon lights with dark 
 ```
 *(Tip: You can omit the `generate` keyword for a shorter command: `haydee-gen --name ...`)*
 
-The script will automatically read the base texture, contact the Gemini API, convert the formats, and generate the mod inside your `Haydee/Outfits` folder.
+The script will automatically read the base texture, contact the Gemini API to generate the diffuse texture (`Suit_D.dds`), then request a material mask which is packed into a specular map (`Suit_S.dds`). Additionally, a neutral normal map (`Suit_N.dds`) is generated to prevent the original 3D model's baked geometry details (like cloth folds) from clashing with the new AI-generated materials. The final mod will be generated inside your `Haydee/Outfits` folder, ready to use!
 
 **2. Grouping Outfits into a Multi-Mod**
 If you have generated multiple outfits and want to group them into a single mod with switchable variations (e.g., in a single "Rainbow" outfit with different colored slots):

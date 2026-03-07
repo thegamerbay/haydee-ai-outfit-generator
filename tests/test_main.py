@@ -54,7 +54,10 @@ def test_main_success_flow(
     mock_builder_instance.prepare_directory.assert_called_once()
     mock_image_processor.dds_to_png.assert_called_once()
     mock_gemini_instance.generate_texture.assert_called_once()
+    mock_gemini_instance.generate_material_mask.assert_called_once()
     mock_image_processor.img_to_dds.assert_called_once()
+    mock_image_processor.create_specular_map.assert_called_once()
+    mock_image_processor.create_neutral_normal_map.assert_called_once()
     mock_builder_instance.generate_mtl_file.assert_called_once()
     mock_builder_instance.generate_outfit_file.assert_called_once()
     
@@ -101,7 +104,10 @@ def test_main_backward_compatibility(
     mock_builder_instance.prepare_directory.assert_called_once()
     mock_image_processor.dds_to_png.assert_called_once()
     mock_gemini_instance.generate_texture.assert_called_once()
+    mock_gemini_instance.generate_material_mask.assert_called_once()
     mock_image_processor.img_to_dds.assert_called_once()
+    mock_image_processor.create_specular_map.assert_called_once()
+    mock_image_processor.create_neutral_normal_map.assert_called_once()
 
 @patch("haydee_outfit_gen.main.Settings")
 @patch("haydee_outfit_gen.main.sys.argv", ["haydee-gen", "generate"])
@@ -157,6 +163,7 @@ def test_main_general_exception(mock_mod_builder_class, mock_parse_args, mock_co
     assert "An error occurred" in caplog.text
     assert "A wild unexpected error appeared!" in caplog.text
 
+@patch("haydee_outfit_gen.main.ImageProcessor")
 @patch("haydee_outfit_gen.main.Settings")
 @patch("haydee_outfit_gen.main.sys.argv", ["haydee-gen", "group"])
 @patch("haydee_outfit_gen.main.argparse.ArgumentParser.parse_args")
@@ -165,6 +172,7 @@ def test_main_group_success_flow(
     mock_multimod_builder_class, 
     mock_parse_args,
     mock_settings_class,
+    mock_image_processor_class,
     mock_config
 ):
     """Test the successful end-to-end run of the group CLI command."""
@@ -195,5 +203,6 @@ def test_main_group_success_flow(
     mock_builder_instance.validate_sources.assert_called_once()
     mock_builder_instance.prepare_directory.assert_called_once()
     mock_builder_instance.migrate_assets_and_generate_mtls.assert_called_once()
+    mock_image_processor_class.create_neutral_normal_map.assert_called_once()
     mock_builder_instance.generate_outfit_file.assert_called_once()
     mock_builder_instance.cleanup_sources.assert_called_once()

@@ -154,3 +154,46 @@ def test_generate_texture_invalid_resolution(mock_config, mocker, tmp_path):
     
     with pytest.raises(ValueError, match="does not match expected"):
         client.generate_texture(base_image, "FailingStyle", output_image)
+
+def test_generate_material_mask_success_parts_image(mock_config, mocker, tmp_path):
+    """Test successful material mask generation."""
+    mock_genai = mocker.patch('haydee_outfit_gen.gemini_client.genai')
+    
+    # Setup mock client
+    mock_client_instance = MagicMock()
+    mock_genai.Client.return_value = mock_client_instance
+    
+    # Setup mock response with candidate -> content -> parts -> image
+    mock_response = MagicMock()
+    mock_candidate = MagicMock()
+    mock_part = MagicMock()
+    
+    import io
+    from PIL import Image
+    
+    img = Image.new('RGB', (4096, 4096))
+    b = io.BytesIO()
+    img.save(b, format='JPEG')
+    fake_image_data = b.getvalue()
+    
+    mock_part.image = MagicMock()
+    mock_part.image.image_bytes = fake_image_data
+    
+    mock_candidate.content.parts = [mock_part]
+    mock_response.candidates = [mock_candidate]
+    
+    mock_client_instance.models.generate_content.return_value = mock_response
+    
+    # Initialize our client wrapper and call
+    client = GeminiModClient(api_key="fake_test_key_123")
+    
+    base_image = tmp_path / "base_suit_d.png"
+    Image.new('RGB', (1, 1)).save(base_image)
+    output_image = tmp_path / "output_mask.png"
+    
+    client.generate_material_mask(base_image, output_image)
+    
+    # Assertions
+    assert output_image.exists()
+    assert len(output_image.read_bytes()) == len(fake_image_data)
+    mock_client_instance.models.generate_content.assert_called_once()

@@ -35,9 +35,9 @@ material
 	twoSided false;
 	width 64.0;
 	height 64.0;
-	normalMap "Outfits\\Haydee\\Suit_N.dds";
+	normalMap "Outfits\\{self.mod_name}\\Suit_N.dds";
 	diffuseMap "Outfits\\{self.mod_name}\\Suit_D.dds";
-	specularMap "Outfits\\Haydee\\Suit_S.dds";
+	specularMap "Outfits\\{self.mod_name}\\Suit_S.dds";
 	speculars 1.0 2.0 0.0;
 	surface Default;
 }}
@@ -201,6 +201,13 @@ class MultiModBuilder:
             dst_dds = self.mod_dir / f"{mod}_d.dds"
             shutil.copy2(src_dds, dst_dds)
             
+            # Copy mask/specular texture and rename it to {mod}_s.dds to prevent collisions
+            src_s_dds = self.outfits_dir / mod / "Suit_S.dds"
+            dst_s_dds = self.mod_dir / f"{mod}_s.dds"
+            # Fallback for old mods that might not have a Suit_S generated
+            if src_s_dds.exists():
+                shutil.copy2(src_s_dds, dst_s_dds)
+            
             # Generate MTL file for this specific variant
             mtl_content = f"""HD_DATA_TXT 300
 material
@@ -209,9 +216,9 @@ material
 	twoSided false;
 	width 64.0;
 	height 64.0;
-	normalMap "Outfits\\Haydee\\Suit_N.dds";
+	normalMap "Outfits\\{self.multimod_name}\\Suit_N.dds";
 	diffuseMap "Outfits\\{self.multimod_name}\\{mod}_d.dds";
-	specularMap "Outfits\\Haydee\\Suit_S.dds";
+	specularMap "Outfits\\{self.multimod_name}\\{mod}_s.dds";
 	speculars 1.0 2.0 0.0;
 	surface Default;
 }}
