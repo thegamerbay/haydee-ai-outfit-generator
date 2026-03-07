@@ -97,5 +97,6 @@ def test_create_neutral_normal_map(mocker, tmp_path):
     
     ImageProcessor.create_neutral_normal_map(dds_path, resolution="4K")
     
-    mock_image_new.assert_called_once_with("RGB", (4096, 4096), (128, 128, 255))
+    # Change expected values to RGBA and semi-transparent gray
+    mock_image_new.assert_called_once_with("RGBA", (4096, 4096), (128, 128, 128, 128))
     mock_neutral_img.save.assert_called_once_with(dds_path, format="DDS", pixel_format="DXT5")

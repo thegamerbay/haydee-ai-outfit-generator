@@ -70,14 +70,14 @@ class ImageProcessor:
 
     @staticmethod
     def create_neutral_normal_map(dds_path: Path, resolution: str = "4K") -> None:
-        """Generates a flat, neutral normal map (128, 128, 255) to remove baked geometry details."""
+        """Generates a flat, neutral normal map (128, 128, 128, 128) for DXT5nm format."""
         logger.info("Generating a neutral normal map (Suit_N.dds)...")
         
         target_size = 4096 if resolution == "4K" else 2048
         
-        # Neutral normal map color: R=128, G=128, B=255
-        neutral_color = (128, 128, 255)
-        neutral_img = Image.new("RGB", (target_size, target_size), neutral_color)
+        # In DXT5nm format, a flat normal is a semi-transparent gray (Alpha = 128)
+        neutral_color = (128, 128, 128, 128)
+        neutral_img = Image.new("RGBA", (target_size, target_size), neutral_color)
         
         # Save as DDS
         neutral_img.save(dds_path, format="DDS", pixel_format="DXT5")
