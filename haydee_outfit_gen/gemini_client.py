@@ -8,9 +8,10 @@ logger = logging.getLogger(__name__)
 class GeminiModClient:
     """Handles communication with the Gemini API for texture generation."""
 
-    def __init__(self, api_key: str, image_resolution: str = "4K"):
+    def __init__(self, api_key: str, image_resolution: str = "4K", model_name: str = "gemini-3.1-flash-image-preview"):
         self.api_key = api_key
         self.image_resolution = image_resolution
+        self.model_name = model_name
         self.client = genai.Client(api_key=self.api_key)
 
     def generate_texture(self, base_image_path: Path, style: str, output_path: Path) -> None:
@@ -50,7 +51,7 @@ class GeminiModClient:
             ]
             
             result = self.client.models.generate_content(
-                model='gemini-3.1-flash-image-preview',
+                model=self.model_name,
                 contents=contents,
                 config=types.GenerateContentConfig(
                     response_modalities=['IMAGE'],
@@ -137,7 +138,7 @@ class GeminiModClient:
             contents = [prompt, Image.open(diffuse_image_path)]
             
             result = self.client.models.generate_content(
-                model='gemini-3.1-flash-image-preview',
+                model=self.model_name,
                 contents=contents,
                 config=types.GenerateContentConfig(
                     response_modalities=['IMAGE'],

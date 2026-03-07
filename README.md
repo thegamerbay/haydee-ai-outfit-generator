@@ -60,6 +60,7 @@ pip install haydee-outfit-generator
 * `GEMINI_API_KEY`: Your Google Gemini API Key.
 * `HAYDEE_PATH`: Absolute path to your Haydee installation directory.
 * `IMAGE_RESOLUTION`: (Optional) Output resolution. Default is `4K`. Can be set to `2K` (2048x2048) if needed.
+* `MODEL_NAME`: (Optional) The Gemini AI model to use. Default is `gemini-3.1-flash-image-preview`.
 
 ## 🐳 Setup (Docker)
 

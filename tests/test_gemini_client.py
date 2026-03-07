@@ -4,10 +4,13 @@ from unittest.mock import MagicMock, call
 from haydee_outfit_gen.gemini_client import GeminiModClient
 
 def test_gemini_client_init(mock_config, mocker):
-    """Test client initializes with the correct API key."""
+    """Test client initializes with the correct API key and model name."""
     mock_genai = mocker.patch('haydee_outfit_gen.gemini_client.genai')
     
-    client = GeminiModClient(api_key="fake_test_key_123")
+    client = GeminiModClient(api_key="fake_test_key_123", image_resolution="2K", model_name="custom-model")
+    assert client.api_key == "fake_test_key_123"
+    assert client.image_resolution == "2K"
+    assert client.model_name == "custom-model"
     mock_genai.Client.assert_called_once_with(api_key="fake_test_key_123")
 
 def test_generate_texture_success_parts_image(mock_config, mocker, tmp_path):

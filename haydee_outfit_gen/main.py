@@ -73,7 +73,11 @@ def main():
                 ImageProcessor.dds_to_png(base_dds, base_png)
 
                 # 2. Generate Suit_D New Texture
-                client = GeminiModClient(api_key=config.gemini_api_key, image_resolution=config.image_resolution)
+                client = GeminiModClient(
+                    api_key=config.gemini_api_key, 
+                    image_resolution=config.image_resolution,
+                    model_name=config.model_name
+                )
                 client.generate_texture(
                     base_image_path=base_png,
                     style=args.style,
