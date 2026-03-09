@@ -28,6 +28,7 @@ def main():
     gen_parser.add_argument("--skip-d", action="store_true", help="Skip generation of Suit_D (diffuse map)")
     gen_parser.add_argument("--skip-s", action="store_true", help="Skip generation of Suit_S (specular map)")
     gen_parser.add_argument("--skip-n", action="store_true", help="Skip generation of Suit_N (normal map)")
+    gen_parser.add_argument("--max-retries", type=int, default=3, help="Maximum number of regeneration attempts if validation fails (default: 3)")
 
     # --- Command: Group (Multi-mod) ---
     group_parser = subparsers.add_parser("group", help="Group multiple existing mods into a single multi-mod")
@@ -80,7 +81,8 @@ def main():
                 client = GeminiModClient(
                     api_key=config.gemini_api_key, 
                     image_resolution=config.image_resolution,
-                    model_name=config.model_name
+                    model_name=config.model_name,
+                    validator_model=config.validator_model
                 )
                 
                 final_d_dds = builder.mod_dir / "Suit_D.dds"
@@ -89,12 +91,39 @@ def main():
                     # 1. Convert base DDS to PNG
                     ImageProcessor.dds_to_png(base_dds, base_png)
 
-                    # 2. Generate Suit_D New Texture
-                    client.generate_texture(
-                        base_image_path=base_png,
-                        style=args.style,
-                        output_path=generated_d_png
-                    )
+                    # 2. Generate Suit_D New Texture WITH RETRY LOOP
+                    max_attempts = getattr(args, "max_retries", 3)
+                    attempt = 1
+                    feedback = None
+                    is_valid = False
+
+                    while attempt <= max_attempts:
+                        logger.info(f"Generation attempt {attempt}/{max_attempts}...")
+                        
+                        client.generate_texture(
+                            base_image_path=base_png,
+                            style=args.style,
+                            output_path=generated_d_png,
+                            previous_feedback=feedback
+                        )
+
+                        validation_result = client.validate_texture(
+                            base_image_path=base_png,
+                            generated_image_path=generated_d_png, 
+                            style=args.style
+                        )
+
+                        if validation_result.is_valid:
+                            logger.info("✅ Texture passed QA validation!")
+                            is_valid = True
+                            break
+                        else:
+                            logger.warning(f"❌ Texture validation failed: {validation_result.feedback}")
+                            feedback = validation_result.feedback
+                            attempt += 1
+
+                    if not is_valid:
+                        logger.error(f"⚠️ Max retries ({max_attempts}) reached. Proceeding with the last generated texture, but it may contain structural flaws.")
 
                     # 3. Save Diffuse as DDS
                     ImageProcessor.img_to_dds(generated_d_png, final_d_dds, resolution=config.image_resolution)

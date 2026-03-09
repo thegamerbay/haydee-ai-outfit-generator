@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     haydee_path: Path
     image_resolution: str = "4K"
     model_name: str = "gemini-3.1-flash-image-preview"
+    validator_model: str = "gemini-3.1-pro-preview"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

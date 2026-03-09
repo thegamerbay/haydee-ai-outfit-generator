@@ -243,3 +243,133 @@ def test_generate_normal_map_success_parts_image(mock_config, mocker, tmp_path):
     assert output_image.exists()
     assert len(output_image.read_bytes()) == len(fake_image_data)
     mock_client_instance.models.generate_content.assert_called_once()
+
+def test_validate_texture_success(mock_config, mocker, tmp_path):
+    """Test validate_texture returns is_valid=True for a good texture."""
+    mock_genai = mocker.patch('haydee_outfit_gen.gemini_client.genai')
+    mock_client_instance = MagicMock()
+    mock_genai.Client.return_value = mock_client_instance
+    
+    mock_result = MagicMock()
+    # Assuming Pydantic parses to an object with is_valid=True
+    from haydee_outfit_gen.gemini_client import ValidationResult
+    mock_result.parsed = ValidationResult(
+        is_face_valid=True, is_torso_seams_valid=True, 
+        is_legs_valid=True, 
+        feedback="Looks good"
+    )
+    mock_client_instance.models.generate_content.return_value = mock_result
+    
+    client = GeminiModClient(api_key="fake_test_key_123")
+    
+    base_image = tmp_path / "test_image.png"
+    from PIL import Image
+    Image.new('RGB', (1, 1)).save(base_image)
+    
+    result = client.validate_texture(base_image, base_image, "Synthwave")
+    
+    assert result.is_valid is True
+    assert result.feedback == "Looks good"
+    mock_client_instance.models.generate_content.assert_called_once()
+    
+def test_validate_texture_failure_with_feedback(mock_config, mocker, tmp_path):
+    """Test validate_texture returns is_valid=False and feedback."""
+    mock_genai = mocker.patch('haydee_outfit_gen.gemini_client.genai')
+    mock_client_instance = MagicMock()
+    mock_genai.Client.return_value = mock_client_instance
+    
+    mock_result = MagicMock()
+    from haydee_outfit_gen.gemini_client import ValidationResult
+    mock_result.parsed = ValidationResult(
+        is_face_valid=False, is_torso_seams_valid=True, 
+        is_legs_valid=True, 
+        feedback="Found human face on helmet."
+    )
+    mock_client_instance.models.generate_content.return_value = mock_result
+    
+    client = GeminiModClient(api_key="fake_test_key_123")
+    
+    base_image = tmp_path / "test_image.png"
+    from PIL import Image
+    Image.new('RGB', (1, 1)).save(base_image)
+    
+    result = client.validate_texture(base_image, base_image, "Synthwave")
+    
+    assert result.is_valid is False
+    assert result.feedback == "Found human face on helmet."
+
+def test_validate_texture_exception_fallback(mock_config, mocker, tmp_path):
+    """Test validate_texture safely degrades if API throws exception."""
+    mock_genai = mocker.patch('haydee_outfit_gen.gemini_client.genai')
+    mock_client_instance = MagicMock()
+    mock_genai.Client.return_value = mock_client_instance
+    
+    mock_client_instance.models.generate_content.side_effect = Exception("Deadline exceeded")
+    
+    client = GeminiModClient(api_key="fake_test_key_123")
+    
+    base_image = tmp_path / "test_image.png"
+    from PIL import Image
+    Image.new('RGB', (1, 1)).save(base_image)
+    
+    result = client.validate_texture(base_image, base_image, "Synthwave")
+    
+    assert result.is_valid is True
+    assert "bypassed" in result.feedback
+
+@pytest.mark.parametrize("error_msg", [
+    "503 UNAVAILABLE",
+    "504 DEADLINE_EXCEEDED",
+    "Deadline expired before operation",
+    "status': 'UNAVAILABLE"
+])
+def test_generate_texture_retry_on_transient_error(error_msg, mock_config, mocker, tmp_path):
+    """Test that the client retries on transient errors."""
+    mock_genai = mocker.patch('haydee_outfit_gen.gemini_client.genai')
+    mock_sleep = mocker.patch('time.sleep')
+    
+    mock_client_instance = MagicMock()
+    mock_genai.Client.return_value = mock_client_instance
+    
+    # Configure to always throw the transient error
+    mock_client_instance.models.generate_content.side_effect = Exception(error_msg)
+    
+    client = GeminiModClient(api_key="fake_test_key_123")
+    
+    base_image = tmp_path / "base.png"
+    from PIL import Image
+    Image.new('RGB', (1, 1)).save(base_image)
+    output_image = tmp_path / "output.jpg"
+    
+    with pytest.raises(Exception, match=error_msg):
+        client.generate_texture(base_image, "Retro", output_image)
+        
+    # Should attempt 4 times total (1 initial + 3 retries)
+    assert mock_client_instance.models.generate_content.call_count == 4
+    # Should sleep 3 times
+    assert mock_sleep.call_count == 3
+    
+def test_generate_texture_no_retry_on_fatal_error(mock_config, mocker, tmp_path):
+    """Test that the client does NOT retry on non-transient errors."""
+    mock_genai = mocker.patch('haydee_outfit_gen.gemini_client.genai')
+    mock_sleep = mocker.patch('time.sleep')
+    
+    mock_client_instance = MagicMock()
+    mock_genai.Client.return_value = mock_client_instance
+    
+    # Throw a fatal error (e.g. 401 Unauthorized)
+    mock_client_instance.models.generate_content.side_effect = Exception("401 Unauthorized")
+    
+    client = GeminiModClient(api_key="fake_test_key_123")
+    
+    base_image = tmp_path / "base.png"
+    from PIL import Image
+    Image.new('RGB', (1, 1)).save(base_image)
+    output_image = tmp_path / "output.jpg"
+    
+    with pytest.raises(Exception, match="401 Unauthorized"):
+        client.generate_texture(base_image, "Retro", output_image)
+        
+    # Should attempt exactly 1 time
+    assert mock_client_instance.models.generate_content.call_count == 1
+    mock_sleep.assert_not_called()

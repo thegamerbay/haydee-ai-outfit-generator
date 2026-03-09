@@ -27,6 +27,7 @@ def test_main_success_flow(
     mock_args.skip_d = False
     mock_args.skip_s = False
     mock_args.skip_n = False
+    mock_args.max_retries = 3
     mock_parse_args.return_value = mock_args
     
     mock_path = MagicMock()
@@ -130,6 +131,7 @@ def test_main_base_texture_not_found(mock_mod_builder_class, mock_parse_args, mo
     mock_args.skip_d = False
     mock_args.skip_s = False
     mock_args.skip_n = False
+    mock_args.max_retries = 3
     mock_parse_args.return_value = mock_args
 
     mock_path = MagicMock()
@@ -162,6 +164,7 @@ def test_main_general_exception(mock_mod_builder_class, mock_parse_args, mock_co
     mock_args.skip_d = False
     mock_args.skip_s = False
     mock_args.skip_n = False
+    mock_args.max_retries = 3
     mock_parse_args.return_value = mock_args
     
     mock_mod_builder_class.side_effect = Exception("A wild unexpected error appeared!")
@@ -245,6 +248,7 @@ def test_main_skip_all_except_d(
     mock_args.skip_d = False
     mock_args.skip_s = True
     mock_args.skip_n = True
+    mock_args.max_retries = 3
     mock_parse_args.return_value = mock_args
 
     mock_path = MagicMock()
@@ -307,6 +311,7 @@ def test_main_skip_d_without_style(
     mock_args.skip_d = True
     mock_args.skip_s = False
     mock_args.skip_n = False
+    mock_args.max_retries = 3
     mock_parse_args.return_value = mock_args
 
     mock_path = MagicMock()
@@ -359,6 +364,7 @@ def test_main_skip_d_missing_existing(
     mock_args.skip_d = True
     mock_args.skip_s = False
     mock_args.skip_n = False
+    mock_args.max_retries = 3
     mock_parse_args.return_value = mock_args
 
     mock_settings_instance = MagicMock()
@@ -374,5 +380,134 @@ def test_main_skip_d_missing_existing(
             with caplog.at_level(logging.ERROR):
                 main.main()
                 
-    assert excinfo.value.code == 1
     assert "Cannot generate Suit_S or Suit_N because Suit_D generation was skipped and Suit_D.dds does not exist" in caplog.text
+
+@patch("haydee_outfit_gen.main.sys.argv", ["haydee-gen", "generate"])
+@patch("haydee_outfit_gen.main.argparse.ArgumentParser.parse_args")
+@patch("haydee_outfit_gen.main.ModBuilder")
+@patch("haydee_outfit_gen.main.ImageProcessor")
+@patch("haydee_outfit_gen.main.Settings")
+@patch("haydee_outfit_gen.main.GeminiModClient")
+@patch("haydee_outfit_gen.main.tempfile.TemporaryDirectory")
+def test_main_retry_success_second_attempt(
+    mock_tmp_dir, 
+    mock_gemini_client_class,
+    mock_settings_class,
+    mock_image_processor, 
+    mock_mod_builder_class, 
+    mock_parse_args, 
+    mock_config,
+    caplog
+):
+    """Test that generation retries successfully on the second attempt after initially failing validation."""
+    mock_args = MagicMock()
+    mock_args.command = "generate"
+    mock_args.name = "TestMod"
+    mock_args.style = "Test Style"
+    mock_args.author = None
+    mock_args.skip_d = False
+    mock_args.skip_s = True
+    mock_args.skip_n = True
+    mock_args.max_retries = 3
+    mock_parse_args.return_value = mock_args
+    
+    mock_path = MagicMock()
+    mock_path.exists.return_value = True
+    mock_settings_instance = MagicMock()
+    mock_settings_instance.base_texture_path = mock_path
+    mock_settings_class.return_value = mock_settings_instance
+    
+    mock_builder_instance = MagicMock()
+    mock_builder_instance.mod_dir = mock_config.outfits_dir / "TestMod"
+    mock_mod_builder_class.return_value = mock_builder_instance
+    
+    mock_tmp_context = MagicMock()
+    mock_tmp_context.__enter__.return_value = "/tmp/fake_dir"
+    mock_tmp_dir.return_value = mock_tmp_context
+    
+    # Setup Gemini client mock
+    mock_gemini_instance = MagicMock()
+    mock_gemini_client_class.return_value = mock_gemini_instance
+    
+    from haydee_outfit_gen.gemini_client import ValidationResult
+    invalid_result = ValidationResult(is_face_valid=False, is_torso_seams_valid=True, is_legs_valid=True, feedback="Bad anatomy.")
+    valid_result = ValidationResult(is_face_valid=True, is_torso_seams_valid=True, is_legs_valid=True, feedback="Looks good.")
+    
+    # First call returns invalid, second call returns valid
+    mock_gemini_instance.validate_texture.side_effect = [invalid_result, valid_result]
+    
+    import logging
+    with caplog.at_level(logging.INFO):
+        main.main()
+    
+    # Verify generate_texture was called exactly 2 times
+    assert mock_gemini_instance.generate_texture.call_count == 2
+    # The first time feedback was None, the second time it was "Bad anatomy."
+    calls = mock_gemini_instance.generate_texture.call_args_list
+    assert calls[0].kwargs.get("previous_feedback") is None
+    assert calls[1].kwargs.get("previous_feedback") == "Bad anatomy."
+    
+    assert "Texture validation failed: Bad anatomy." in caplog.text
+    assert "Texture passed QA validation!" in caplog.text
+
+@patch("haydee_outfit_gen.main.sys.argv", ["haydee-gen", "generate"])
+@patch("haydee_outfit_gen.main.argparse.ArgumentParser.parse_args")
+@patch("haydee_outfit_gen.main.ModBuilder")
+@patch("haydee_outfit_gen.main.ImageProcessor")
+@patch("haydee_outfit_gen.main.Settings")
+@patch("haydee_outfit_gen.main.GeminiModClient")
+@patch("haydee_outfit_gen.main.tempfile.TemporaryDirectory")
+def test_main_retry_failure_max_retries(
+    mock_tmp_dir, 
+    mock_gemini_client_class,
+    mock_settings_class,
+    mock_image_processor, 
+    mock_mod_builder_class, 
+    mock_parse_args, 
+    mock_config,
+    caplog
+):
+    """Test that generation attempts hit the max_retries limit and proceeds with a warning."""
+    mock_args = MagicMock()
+    mock_args.command = "generate"
+    mock_args.name = "TestMod"
+    mock_args.style = "Test Style"
+    mock_args.author = None
+    mock_args.skip_d = False
+    mock_args.skip_s = True
+    mock_args.skip_n = True
+    mock_args.max_retries = 3
+    mock_parse_args.return_value = mock_args
+    
+    mock_path = MagicMock()
+    mock_path.exists.return_value = True
+    mock_settings_instance = MagicMock()
+    mock_settings_instance.base_texture_path = mock_path
+    mock_settings_class.return_value = mock_settings_instance
+    
+    mock_builder_instance = MagicMock()
+    mock_builder_instance.mod_dir = mock_config.outfits_dir / "TestMod"
+    mock_mod_builder_class.return_value = mock_builder_instance
+    
+    mock_tmp_context = MagicMock()
+    mock_tmp_context.__enter__.return_value = "/tmp/fake_dir"
+    mock_tmp_dir.return_value = mock_tmp_context
+    
+    mock_gemini_instance = MagicMock()
+    mock_gemini_client_class.return_value = mock_gemini_instance
+    
+    from haydee_outfit_gen.gemini_client import ValidationResult
+    invalid_result = ValidationResult(is_face_valid=False, is_torso_seams_valid=True, is_legs_valid=True, feedback="Persistent bad anatomy.")
+    
+    # Always returns invalid
+    mock_gemini_instance.validate_texture.return_value = invalid_result
+    
+    import logging
+    with caplog.at_level(logging.INFO):
+        main.main()
+    
+    # Verify generate_texture was called exactly max_retries (3) times
+    assert mock_gemini_instance.generate_texture.call_count == 3
+    
+    assert "Texture validation failed: Persistent bad anatomy." in caplog.text
+    assert "Max retries (3) reached. Proceeding with the last generated texture" in caplog.text

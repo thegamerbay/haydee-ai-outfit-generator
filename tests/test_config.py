@@ -7,6 +7,7 @@ def test_settings_initialization(mock_config):
     """Test that settings load correctly from the environment."""
     assert mock_config.gemini_api_key == "fake_test_key_123"
     assert mock_config.model_name == "gemini-3.1-flash-image-preview"
+    assert mock_config.validator_model == "gemini-3.1-pro-preview"
     assert "fake_haydee_path" in str(mock_config.haydee_path) or "pytest" in str(mock_config.haydee_path)
 
 def test_settings_property_outfits_dir(mock_config):

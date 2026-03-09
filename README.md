@@ -11,11 +11,20 @@
 [![Python Version](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-
 Automated Python pipeline to generate custom outfit textures for the game [Haydee](https://store.steampowered.com/app/530890/Haydee/) using the Google Gemini API.
 
 > [!TIP]
 > **Not a fan of the command line?** Check out the [Haydee AI Outfit Generator GUI](https://github.com/thegamerbay/haydee-ai-outfit-generator-gui)! It's a modern, ready-to-use graphical interface that lets you easily generate custom outfits without messing with terminals or environment variables. Download the latest release to get started instantly!
+
+### 🤖 Two-Image Multi-Criteria LLM-as-a-Judge Validation
+This project features an advanced automated **Quality Assurance Feedback Loop**. While a fast model (like `gemini-3.1-flash-image`) paints the textures, a stronger reasoning model (like `gemini-3.1-pro`) acts as a strict QA Inspector using a **Two-Image Multi-Criteria** approach. 
+
+The Inspector compares the generated UV texture side-by-side with the original blank template to evaluate specific structural rules independently:
+1. **Face Rule:** Ensures the character's helmet remains completely faceless (no human features, glasses, or respirators).
+2. **Torso Seam Rule:** Verifies that the front and back torso clothing/armor pieces match perfectly to prevent visible seams in 3D.
+3. **Legs Rule:** Ensures the left and right legs are treated as individual limbs, preventing the AI from drawing two legs inside a single shape.
+
+If any rule is violated, the Inspector rejects the image, provides specific feedback on exactly what broke, and forces the generator to redraw the texture correcting those specific mistakes.
 
 ## ✨ Generation Examples
 
@@ -62,7 +71,8 @@ pip install haydee-outfit-generator
 * `GEMINI_API_KEY`: Your Google Gemini API Key.
 * `HAYDEE_PATH`: Absolute path to your Haydee installation directory.
 * `IMAGE_RESOLUTION`: (Optional) Output resolution. Default is `4K`. Can be set to `2K` (2048x2048) if needed.
-* `MODEL_NAME`: (Optional) The Gemini AI model to use. Default is `gemini-3.1-flash-image-preview`.
+* `MODEL_NAME`: (Optional) The Gemini AI model to use for texture generation. Default is `gemini-3.1-flash-image-preview`.
+* `VALIDATOR_MODEL`: (Optional) The reasoning model to use for QA inspection. Default is `gemini-3.1-pro-preview`.
 
 ## 🐳 Setup (Docker)
 
@@ -89,10 +99,11 @@ You can selectively skip parts of the generation process to save time or API cal
 * `--skip-d`: Skips the generation of the diffuse texture (`Suit_D.dds`). A previously generated texture must exist, otherwise the command will fail. If this flag is provided, the `--style` argument is not mandatory.
 * `--skip-s`: Skips the generation of the material mask and specular map (`Suit_S.dds`).
 * `--skip-n`: Skips the generation of the normal map (`Suit_N.dds`).
+* `--max-retries`: (Optional) Maximum number of regeneration attempts if the texture fails QA validation. Default is `3`.
 
 When skipping map generation (`--skip-s` or `--skip-n`) without generating them earlier, the generated outfit will safely fall back and use Haydee's base neutral maps for those slots.
 
-The script will automatically read the base texture, contact the Gemini API to generate the diffuse texture (`Suit_D.dds`), then request a material mask which is packed into a specular map (`Suit_S.dds`). Additionally, a custom Tangent Space Normal Map (`Suit_N.dds`) is generated alongside the diffuse texture to give the new AI-generated materials matching 3D relief and details. The final mod will be generated inside your `Haydee/Outfits` folder, ready to use!
+The script will automatically read the base texture, contact the Gemini API to generate the diffuse texture (`Suit_D.dds` using the automated Two-Image QA validation loop), then request a material mask which is packed into a specular map (`Suit_S.dds`). Additionally, a custom Tangent Space Normal Map (`Suit_N.dds`) is generated alongside the diffuse texture to give the new AI-generated materials matching 3D relief and details. The final mod will be generated inside your `Haydee/Outfits` folder, ready to use!
 
 **2. Grouping Outfits into a Multi-Mod**
 If you have generated multiple outfits and want to group them into a single mod with switchable variations (e.g., in a single "Rainbow" outfit with different colored slots):
