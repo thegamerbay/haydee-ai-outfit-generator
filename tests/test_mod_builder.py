@@ -55,7 +55,8 @@ def test_generate_mtl_file(mock_config, mocker):
     content = mtl_file.read_text(encoding="utf-8")
     assert "HD_DATA_TXT 300" in content
     assert 'diffuseMap "Outfits\\Synthwave\\Suit_D.dds"' in content
-    assert 'specularMap "Outfits\\Synthwave\\Suit_S.dds"' in content
+    assert 'specularMap "Outfits\\Haydee\\Suit_S.dds"' in content
+    assert 'normalMap "Outfits\\Haydee\\Suit_N.dds"' in content
 
 def test_generate_outfit_file(mock_config, mocker):
     """Test that the .outfit file is generated with correct content."""

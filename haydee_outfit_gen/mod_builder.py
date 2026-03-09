@@ -17,9 +17,9 @@ class ModBuilder:
         self.outfits_dir = outfits_dir
         self.mod_dir = self.outfits_dir / self.mod_name
 
-    def prepare_directory(self) -> None:
+    def prepare_directory(self, clear_dir: bool = True) -> None:
         """Creates the mod directory, overwriting if it already exists."""
-        if self.mod_dir.exists():
+        if self.mod_dir.exists() and clear_dir:
             logger.warning(f"Mod directory '{self.mod_name}' already exists. Overwriting...")
             shutil.rmtree(self.mod_dir)
         
@@ -28,6 +28,12 @@ class ModBuilder:
 
     def generate_mtl_file(self) -> None:
         """Generates the .mtl material mapping file."""
+        has_n = (self.mod_dir / "Suit_N.dds").exists()
+        has_s = (self.mod_dir / "Suit_S.dds").exists()
+        
+        n_path = f"Outfits\\{self.mod_name}\\Suit_N.dds" if has_n else "Outfits\\Haydee\\Suit_N.dds"
+        s_path = f"Outfits\\{self.mod_name}\\Suit_S.dds" if has_s else "Outfits\\Haydee\\Suit_S.dds"
+
         mtl_content = f"""HD_DATA_TXT 300
 material
 {{
@@ -35,9 +41,9 @@ material
 	twoSided false;
 	width 64.0;
 	height 64.0;
-	normalMap "Outfits\\{self.mod_name}\\Suit_N.dds";
+	normalMap "{n_path}";
 	diffuseMap "Outfits\\{self.mod_name}\\Suit_D.dds";
-	specularMap "Outfits\\{self.mod_name}\\Suit_S.dds";
+	specularMap "{s_path}";
 	speculars 1.0 2.0 0.0;
 	surface Default;
 }}

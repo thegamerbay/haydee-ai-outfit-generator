@@ -24,6 +24,9 @@ def test_main_success_flow(
     mock_args.name = "TestMod"
     mock_args.style = "Test Style"
     mock_args.author = None
+    mock_args.skip_d = False
+    mock_args.skip_s = False
+    mock_args.skip_n = False
     mock_parse_args.return_value = mock_args
     
     mock_path = MagicMock()
@@ -124,6 +127,9 @@ def test_main_base_texture_not_found(mock_mod_builder_class, mock_parse_args, mo
     mock_args.name = "TestMod"
     mock_args.style = "Test Style"
     mock_args.author = None
+    mock_args.skip_d = False
+    mock_args.skip_s = False
+    mock_args.skip_n = False
     mock_parse_args.return_value = mock_args
 
     mock_path = MagicMock()
@@ -153,6 +159,9 @@ def test_main_general_exception(mock_mod_builder_class, mock_parse_args, mock_co
     mock_args.name = "TestMod"
     mock_args.style = "Test Style"
     mock_args.author = None
+    mock_args.skip_d = False
+    mock_args.skip_s = False
+    mock_args.skip_n = False
     mock_parse_args.return_value = mock_args
     
     mock_mod_builder_class.side_effect = Exception("A wild unexpected error appeared!")
@@ -208,3 +217,162 @@ def test_main_group_success_flow(
     mock_image_processor_class.create_neutral_normal_map.assert_called_once()
     mock_builder_instance.generate_outfit_file.assert_called_once()
     mock_builder_instance.cleanup_sources.assert_called_once()
+
+
+    
+@patch("haydee_outfit_gen.main.sys.argv", ["haydee-gen", "generate"])
+@patch("haydee_outfit_gen.main.argparse.ArgumentParser.parse_args")
+@patch("haydee_outfit_gen.main.ModBuilder")
+@patch("haydee_outfit_gen.main.ImageProcessor")
+@patch("haydee_outfit_gen.main.Settings")
+@patch("haydee_outfit_gen.main.GeminiModClient")
+@patch("haydee_outfit_gen.main.tempfile.TemporaryDirectory")
+def test_main_skip_all_except_d(
+    mock_tmp_dir, 
+    mock_gemini_client_class,
+    mock_settings_class,
+    mock_image_processor, 
+    mock_mod_builder_class, 
+    mock_parse_args, 
+    mock_config
+):
+    """Test skipping Suit_S and Suit_N generates only Suit_D."""
+    mock_args = MagicMock()
+    mock_args.command = "generate"
+    mock_args.name = "TestMod"
+    mock_args.style = "Test Style"
+    mock_args.author = None
+    mock_args.skip_d = False
+    mock_args.skip_s = True
+    mock_args.skip_n = True
+    mock_parse_args.return_value = mock_args
+
+    mock_path = MagicMock()
+    mock_path.exists.return_value = True
+
+    mock_settings_instance = MagicMock()
+    mock_settings_instance.base_texture_path = mock_path
+    mock_settings_class.return_value = mock_settings_instance
+
+    mock_builder_instance = MagicMock()
+    mock_builder_instance.mod_dir = mock_config.outfits_dir / "TestMod"
+    mock_mod_builder_class.return_value = mock_builder_instance
+
+    mock_tmp_context = MagicMock()
+    mock_tmp_context.__enter__.return_value = "/tmp/fake_dir"
+    mock_tmp_dir.return_value = mock_tmp_context
+
+    mock_gemini_instance = MagicMock()
+    mock_gemini_client_class.return_value = mock_gemini_instance
+
+    main.main()
+
+    # Verifications
+    mock_builder_instance.prepare_directory.assert_called_once_with(clear_dir=True)
+    mock_image_processor.dds_to_png.assert_called_once()
+    mock_gemini_instance.generate_texture.assert_called_once()
+    mock_image_processor.img_to_dds.assert_called_once()
+    
+    # These should NOT be called
+    mock_gemini_instance.generate_material_mask.assert_not_called()
+    mock_image_processor.create_specular_map.assert_not_called()
+    mock_gemini_instance.generate_normal_map.assert_not_called()
+    mock_image_processor.create_custom_normal_map.assert_not_called()
+    
+    mock_builder_instance.generate_mtl_file.assert_called_once()
+
+
+@patch("haydee_outfit_gen.main.sys.argv", ["haydee-gen", "generate"])
+@patch("haydee_outfit_gen.main.argparse.ArgumentParser.parse_args")
+@patch("haydee_outfit_gen.main.ModBuilder")
+@patch("haydee_outfit_gen.main.ImageProcessor")
+@patch("haydee_outfit_gen.main.Settings")
+@patch("haydee_outfit_gen.main.GeminiModClient")
+@patch("haydee_outfit_gen.main.tempfile.TemporaryDirectory")
+def test_main_skip_d_without_style(
+    mock_tmp_dir, 
+    mock_gemini_client_class,
+    mock_settings_class,
+    mock_image_processor, 
+    mock_mod_builder_class, 
+    mock_parse_args, 
+    mock_config
+):
+    """Test skipping Suit_D without style and successfully generating S and N using existing D."""
+    mock_args = MagicMock()
+    mock_args.command = "generate"
+    mock_args.name = "TestMod"
+    mock_args.style = None
+    mock_args.author = None
+    mock_args.skip_d = True
+    mock_args.skip_s = False
+    mock_args.skip_n = False
+    mock_parse_args.return_value = mock_args
+
+    mock_path = MagicMock()
+    mock_path.exists.return_value = True
+    mock_settings_instance = MagicMock()
+    mock_settings_instance.base_texture_path = mock_path
+    mock_settings_class.return_value = mock_settings_instance
+
+    mock_builder_instance = MagicMock()
+    mock_builder_instance.mod_dir = mock_config.outfits_dir / "TestMod"
+    mock_mod_builder_class.return_value = mock_builder_instance
+
+    mock_tmp_context = MagicMock()
+    mock_tmp_context.__enter__.return_value = "/tmp/fake_dir"
+    mock_tmp_dir.return_value = mock_tmp_context
+
+    mock_gemini_instance = MagicMock()
+    mock_gemini_client_class.return_value = mock_gemini_instance
+
+    # Mock that Suit_D.dds DOES exist in mod dir
+    with patch("haydee_outfit_gen.main.Path.exists", return_value=True):
+        main.main()
+
+    # Verify style wasn't needed and image processing called for S and N
+    mock_gemini_instance.generate_texture.assert_not_called()
+    mock_image_processor.dds_to_png.assert_called_once() # Should be called to convert existing Suit_D
+    mock_gemini_instance.generate_material_mask.assert_called_once()
+    mock_gemini_instance.generate_normal_map.assert_called_once()
+
+
+@patch("haydee_outfit_gen.main.sys.argv", ["haydee-gen", "generate"])
+@patch("haydee_outfit_gen.main.argparse.ArgumentParser.parse_args")
+@patch("haydee_outfit_gen.main.ModBuilder")
+@patch("haydee_outfit_gen.main.Settings")
+def test_main_skip_d_missing_existing(
+    mock_settings_class,
+    mock_mod_builder_class, 
+    mock_parse_args, 
+    mock_config,
+    caplog
+):
+    """Test skipping Suit_D when it does not exist locally should fail."""
+    import logging
+    
+    mock_args = MagicMock()
+    mock_args.command = "generate"
+    mock_args.name = "TestMod"
+    mock_args.style = None
+    mock_args.author = None
+    mock_args.skip_d = True
+    mock_args.skip_s = False
+    mock_args.skip_n = False
+    mock_parse_args.return_value = mock_args
+
+    mock_settings_instance = MagicMock()
+    mock_settings_class.return_value = mock_settings_instance
+
+    mock_builder_instance = MagicMock()
+    mock_builder_instance.mod_dir = mock_config.outfits_dir / "TestMod"
+    mock_mod_builder_class.return_value = mock_builder_instance
+
+    # Mock that Suit_D.dds does NOT exist in mod dir
+    with patch("haydee_outfit_gen.main.Path.exists", return_value=False):
+        with pytest.raises(SystemExit) as excinfo:
+            with caplog.at_level(logging.ERROR):
+                main.main()
+                
+    assert excinfo.value.code == 1
+    assert "Cannot generate Suit_S or Suit_N because Suit_D generation was skipped and Suit_D.dds does not exist" in caplog.text

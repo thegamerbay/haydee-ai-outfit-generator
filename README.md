@@ -82,6 +82,14 @@ haydee-gen generate --name "NeonSurge" --style "cyberpunk neon lights with dark 
 ```
 *(Tip: You can omit the `generate` keyword for a shorter command: `haydee-gen --name ...`)*
 
+**Partial Generation Parameters**
+You can selectively skip parts of the generation process to save time or API calls if you've already generated them in previous runs:
+* `--skip-d`: Skips the generation of the diffuse texture (`Suit_D.dds`). A previously generated texture must exist, otherwise the command will fail. If this flag is provided, the `--style` argument is not mandatory.
+* `--skip-s`: Skips the generation of the material mask and specular map (`Suit_S.dds`).
+* `--skip-n`: Skips the generation of the normal map (`Suit_N.dds`).
+
+When skipping map generation (`--skip-s` or `--skip-n`) without generating them earlier, the generated outfit will safely fall back and use Haydee's base neutral maps for those slots.
+
 The script will automatically read the base texture, contact the Gemini API to generate the diffuse texture (`Suit_D.dds`), then request a material mask which is packed into a specular map (`Suit_S.dds`). Additionally, a custom Tangent Space Normal Map (`Suit_N.dds`) is generated alongside the diffuse texture to give the new AI-generated materials matching 3D relief and details. The final mod will be generated inside your `Haydee/Outfits` folder, ready to use!
 
 **2. Grouping Outfits into a Multi-Mod**
