@@ -1,4 +1,4 @@
 google-genai==1.69.0
 python-dotenv==1.2.2
-pydantic-settings==2.13.1
+pydantic-settings==2.14.0
 pillow>=11.2.1
